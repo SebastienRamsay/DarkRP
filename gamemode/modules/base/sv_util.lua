@@ -134,11 +134,49 @@ function DarkRP.placeEntity(ent, tr, ply)
         ent:SetAngles(ang)
     end
 
-    local vFlushPoint = tr.HitPos - (tr.HitNormal * 512)
-    vFlushPoint = ent:NearestPoint(vFlushPoint)
-    vFlushPoint = ent:GetPos() - vFlushPoint
-    vFlushPoint = tr.HitPos + vFlushPoint
-    ent:SetPos(vFlushPoint)
+    local pos = tr.HitPos
+    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+
+    local dirs = {
+        Vector(1,0,0),
+        Vector(-1,0,0),
+        Vector(0,1,0),
+        Vector(0,-1,0),
+        Vector(0,0,1),
+        Vector(0,0,-1)
+    }
+
+    local offset = Vector(0,0,0)
+
+    for _, dir in ipairs(dirs) do
+        local trace = util.TraceLine({
+            start = pos,
+            endpos = pos + dir * 128,
+            filter = ent
+        })
+
+        local dist = trace.HitPos:Distance(pos)
+
+        if dir.x > 0 and dist < maxs.x then
+            offset.x = offset.x - (maxs.x - dist)
+        elseif dir.x < 0 and dist < math.abs(mins.x) then
+            offset.x = offset.x + (math.abs(mins.x) - dist)
+        end
+
+        if dir.y > 0 and dist < maxs.y then
+            offset.y = offset.y - (maxs.y - dist)
+        elseif dir.y < 0 and dist < math.abs(mins.y) then
+            offset.y = offset.y + (math.abs(mins.y) - dist)
+        end
+
+        if dir.z > 0 and dist < maxs.z then
+            offset.z = offset.z - (maxs.z - dist)
+        elseif dir.z < 0 and dist < math.abs(mins.z) then
+            offset.z = offset.z + (math.abs(mins.z) - dist)
+        end
+    end
+
+    ent:SetPos(pos + offset)
 end
 
 --[[---------------------------------------------------------------------------
