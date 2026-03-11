@@ -8,6 +8,8 @@ local isRoaming = false
 local roamPos -- the position when roaming free
 local roamVelocity = Vector(0)
 local thirdPersonDistance = 100
+local camAngles
+local lockedAngles
 
 /*---------------------------------------------------------------------------
 Retrieve the current spectated player
@@ -61,7 +63,8 @@ end)
 Get the thirdperson position
 ---------------------------------------------------------------------------*/
 local function getThirdPersonPos(ent)
-    local aimvector = LocalPlayer():GetAimVector()
+    local ang = camAngles or EyeAngles()
+    local aimvector = ang:Forward()
     local startPos = ent:IsPlayer() and ent:GetShootPos() or ent:LocalToWorld(ent:OBBCenter())
     local endpos = startPos - aimvector * thirdPersonDistance
 
@@ -84,7 +87,7 @@ local function getCalcView()
     if not isRoaming then
         if thirdperson then
             view.origin = getThirdPersonPos(specEnt)
-            view.angles = LocalPlayer():EyeAngles()
+            view.angles = camAngles
         else
             view.origin = specEnt:IsPlayer() and specEnt:GetShootPos() or specEnt:LocalToWorld(specEnt:OBBCenter())
             view.angles = specEnt:IsPlayer() and specEnt:EyeAngles() or specEnt:GetAngles()
@@ -97,7 +100,7 @@ local function getCalcView()
     end
 
     view.origin = roamPos
-    view.angles = LocalPlayer():EyeAngles()
+    view.angles = camAngles
     view.drawviewer = true
 
     return view
@@ -126,7 +129,7 @@ end
 Find the right player to spectate
 ---------------------------------------------------------------------------*/
 local function findNearestObject()
-    local aimvec = LocalPlayer():GetAimVector()
+    local aimvec = camAngles:Forward()
 
     local fromPos = not isRoaming and IsValid(specEnt) and specEnt:EyePos() or roamPos
 
@@ -200,7 +203,7 @@ local function specBinds(ply, bind, pressed)
         return true
     elseif bind == "+attack2" and pressed then
         if isRoaming then
-            roamPos = roamPos + LocalPlayer():GetAimVector() * 500
+            roamPos = roamPos + (camAngles or EyeAngles()):Forward() * 500
             return true
         end
         thirdperson = not thirdperson
@@ -296,7 +299,7 @@ local function specThink()
     if not isRoaming or keysDown["USE"] then return end
 
     local roamSpeed = 1000
-    local aimVec = ply:GetAimVector()
+    local aimVec = camAngles:Forward()
     local direction
     local frametime = RealFrameTime()
 
@@ -366,7 +369,7 @@ local function drawHelp()
     if not IsValid(target) then return end
 
     local center = target:LocalToWorld(target:OBBCenter())
-    local eyeAng = EyeAngles()
+    local eyeAng = camAngles or EyeAngles()
     local rightUp = eyeAng:Right() * 16 + eyeAng:Up() * 36
     local topRight = (center + rightUp):ToScreen()
     local bottomLeft = (center - rightUp):ToScreen()
@@ -398,6 +401,30 @@ specEnt
 Spectate a player
 ---------------------------------------------------------------------------*/
 local function startSpectate(um)
+    hook.Add("CreateMove", "FSpectate_CamControl", function(cmd)
+        if not isSpectating then return end
+
+        if not camAngles then
+            camAngles = cmd:GetViewAngles()
+            lockedAngles = Angle(camAngles.p, camAngles.y, camAngles.r)
+        end
+
+        local mx = cmd:GetMouseX()
+        local my = cmd:GetMouseY()
+
+        camAngles.y = camAngles.y - mx * 0.022
+        camAngles.p = math.Clamp(camAngles.p + my * 0.022, -89, 89)
+
+        -- Correct movement to match camera
+        local move = Vector(cmd:GetForwardMove(), cmd:GetSideMove(), 0)
+        move:Rotate(Angle(0, camAngles.y - lockedAngles.y, 0))
+
+        cmd:SetForwardMove(move.x)
+        cmd:SetSideMove(move.y)
+
+        -- Keep player view frozen
+        cmd:SetViewAngles(lockedAngles)
+    end)
     isRoaming = net.ReadBool()
     specEnt = net.ReadEntity()
     specEnt = IsValid(specEnt) and specEnt or nil
@@ -430,6 +457,8 @@ stopSpectating
 Stop spectating a player
 ---------------------------------------------------------------------------*/
 stopSpectating = function()
+    hook.Remove("CreateMove", "FSpectate_CamControl")
+    camAngles = nil
     hook.Remove("CalcView", "FSpectate")
     hook.Remove("PlayerBindPress", "FSpectate")
     hook.Remove("ShouldDrawLocalPlayer", "FSpectate")
