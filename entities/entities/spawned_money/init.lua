@@ -39,16 +39,16 @@ function ENT:Use(activator, caller)
     self:Remove()
 end
 
-function ENT:OnTakeDamage(dmg)
-    self:TakePhysicsDamage(dmg)
+-- function ENT:OnTakeDamage(dmg)
+--     self:TakePhysicsDamage(dmg)
 
-    local typ = dmg:GetDamageType()
-    if bit.band(typ, bit.bor(DMG_FALL, DMG_VEHICLE, DMG_DROWN, DMG_RADIATION, DMG_PHYSGUN)) > 0 then return end
+--     local typ = dmg:GetDamageType()
+--     if bit.band(typ, bit.bor(DMG_FALL, DMG_VEHICLE, DMG_DROWN, DMG_RADIATION, DMG_PHYSGUN)) > 0 then return end
 
-    self.USED = true
-    self.hasMerged = true
-    self:Remove()
-end
+--     self.USED = true
+--     self.hasMerged = true
+--     self:Remove()
+-- end
 
 function ENT:StartTouch(ent)
     -- the .USED var is also used in other mods for the same purpose
