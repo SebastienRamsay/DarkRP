@@ -16,18 +16,20 @@ sql.Query([[CREATE TABLE IF NOT EXISTS darkrp_playermodels(
     PRIMARY KEY (server, jobcmd)
 );]])
 
-sql.Query([[DROP TABLE IF EXISTS darkrp_playerbodygroups;]])
-sql.Query([[CREATE TABLE IF NOT EXISTS darkrp_playerbodygroups(
+sql.Query([[DROP TABLE IF EXISTS darkrp_playermodel_extras;]])
+sql.Query([[CREATE TABLE IF NOT EXISTS darkrp_playermodel_extras(
     server TEXT NOT NULL,
     jobcmd TEXT NOT NULL,
     model TEXT NOT NULL,
     bodygroups TEXT NOT NULL,
+    skin INTEGER DEFAULT 0,
     PRIMARY KEY (server, jobcmd)
 );]])
 
 
 local preferredModels = {}
 local preferredBodygroups = {}
+local preferredSkins = {}
 
 
 --[[---------------------------------------------------------------------------
@@ -52,13 +54,11 @@ function DarkRP.getPreferredJobModel(teamNr)
 end
 
 function DarkRP.setPreferredJobBodyGroups(teamNr, groups)
-    print(teamNr)
-    PrintTable(groups)
     local job = RPExtraTeams[teamNr]
     if not job then return end
     preferredBodygroups[job.command] = groups
     PrintTable(preferredBodygroups)
-    sql.Query(string.format([[REPLACE INTO darkrp_playerbodygroups(server, jobcmd, model, bodygroups) VALUES(%s, %s, %s, %s);]], sql.SQLStr(game.GetIPAddress()), sql.SQLStr(job.command), sql.SQLStr(job.model), sql.SQLStr(util.TableToJSON(groups))))
+    sql.Query(string.format([[REPLACE INTO darkrp_playermodel_extras(server, jobcmd, model, bodygroups, skin) VALUES(%s, %s, %s, %s);]], sql.SQLStr(game.GetIPAddress()), sql.SQLStr(job.command), sql.SQLStr(job.model), sql.SQLStr(util.TableToJSON(groups)), sql.SQLStr(preferredSkins[job.command])))
 
     net.Start("DarkRP_preferredBodyGroups")
         net.WriteUInt(teamNr, 8)
@@ -72,6 +72,25 @@ function DarkRP.getPreferredBodyGroups(teamNr)
     return preferredBodygroups[job.command]
 end
 
+function DarkRP.setPreferredJobSkin(teamNr, skin)
+    local job = RPExtraTeams[teamNr]
+    if not job then return end
+    preferredSkins[job.command] = skin
+    PrintTable(preferredSkins)
+    sql.Query(string.format([[REPLACE INTO darkrp_playermodel_extras(server, jobcmd, model, bodygroups, skin) VALUES(%s, %s, %s, %s);]], sql.SQLStr(game.GetIPAddress()), sql.SQLStr(job.command), sql.SQLStr(job.model), sql.SQLStr(util.TableToJSON(preferredBodygroups[job.command] or {})), sql.SQLStr(skin)))
+
+    net.Start("DarkRP_preferredSkin")
+        net.WriteUInt(teamNr, 8)
+        net.WriteUInt(skin, 10)
+    net.SendToServer()
+end
+
+function DarkRP.getPreferredSkin(teamNr)
+    local job = RPExtraTeams[teamNr]
+    if not job then return end
+    return preferredSkins[job.command]
+end
+
 --[[---------------------------------------------------------------------------
 Load the preferred models
 ---------------------------------------------------------------------------]]
@@ -82,6 +101,28 @@ local function sendModels()
 
             net.WriteBit(true)
             net.WriteString(preferredModels[job.command])
+        end
+    net.SendToServer()
+end
+
+local function sendBodygroups()
+    net.Start("DarkRP_all_preferredBodyGroups")
+        for _, job in pairs(RPExtraTeams) do
+            if not preferredModels[job.command] then net.WriteBit(false) continue end
+
+            net.WriteBit(true)
+            net.WriteTable(preferredModels[job.command])
+        end
+    net.SendToServer()
+end
+
+local function sendSkins()
+    net.Start("DarkRP_preferredSkins")
+        for _, job in pairs(RPExtraTeams) do
+            if not preferredModels[job.command] then net.WriteBit(false) continue end
+
+            net.WriteBit(true)
+            net.WriteUInt(preferredSkins[job.command], 10)
         end
     net.SendToServer()
 end
@@ -108,6 +149,15 @@ local function setPreferredBodygroups(bodygroups)
     end
 end
 
+local function setPreferredSkins(skins)
+    for _, v in pairs(skins) do
+        local job = DarkRP.getJobByCommand(v.jobcmd)
+        if job == nil then continue end
+
+        preferredSkins[v.jobcmd] = v.skin
+    end
+end
+
 -- The old table, darkp_playermodels, acts as a global mapping of preferred
 -- models for jobs.
 local function setModelsFromOldTable()
@@ -129,10 +179,17 @@ local function setModelsFromNewTable()
 end
 
 local function setBodygGroupsFromTable()
-    local bodygroups = sql.Query(string.format([[SELECT jobcmd, bodygroups FROM darkrp_playerbodygroups WHERE server = %s;]], sql.SQLStr(game.GetIPAddress())))
+    local bodygroups = sql.Query(string.format([[SELECT jobcmd, bodygroups FROM darkrp_playermodel_extras WHERE server = %s;]], sql.SQLStr(game.GetIPAddress())))
 
     if not bodygroups then return end
     setPreferredBodygroups(bodygroups)
+end
+
+local function setSkinFromTable()
+    local skins = sql.Query(string.format([[SELECT jobcmd, skin FROM darkrp_playermodel_extras WHERE server = %s;]], sql.SQLStr(game.GetIPAddress())))
+
+    if not skins then return end
+    setPreferredSkins(skins)
 end
 
 timer.Simple(0, function()
@@ -143,6 +200,9 @@ timer.Simple(0, function()
     setModelsFromOldTable()
     setModelsFromNewTable()
     setBodygGroupsFromTable()
+    setSkinFromTable()
 
     sendModels()
+    sendBodygroups()
+    sendSkins()
 end)

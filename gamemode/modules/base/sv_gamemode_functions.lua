@@ -651,6 +651,8 @@ function GM:PlayerSetModel(ply)
             print("bodyGroupID", bodyGroupID, "subModelId", subModelId)
             ply:SetBodygroup(bodyGroupID, subModelId)
         end
+
+        ply:SetSkin(ply:getPreferredSkin(ply:Team()) or 0)
     else
         local cl_playermodel = ply:GetInfo("cl_playermodel")
         local modelname = player_manager.TranslatePlayerModel(cl_playermodel)
@@ -661,6 +663,7 @@ function GM:PlayerSetModel(ply)
             print("bodyGroupID", bodyGroupID, "subModelId", subModelId)
             ply:SetBodygroup(bodyGroupID, subModelId)
         end
+        ply:SetSkin(ply:getPreferredSkin(ply:Team()) or 0)
     end
 
     self.Sandbox.PlayerSetModel(self, ply)
