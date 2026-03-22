@@ -16,8 +16,18 @@ sql.Query([[CREATE TABLE IF NOT EXISTS darkrp_playermodels(
     PRIMARY KEY (server, jobcmd)
 );]])
 
+sql.Query([[DROP TABLE IF EXISTS darkrp_playerbodygroups;]])
+sql.Query([[CREATE TABLE IF NOT EXISTS darkrp_playerbodygroups(
+    server TEXT NOT NULL,
+    jobcmd TEXT NOT NULL,
+    model TEXT NOT NULL,
+    bodygroups TEXT NOT NULL,
+    PRIMARY KEY (server, jobcmd)
+);]])
+
 
 local preferredModels = {}
+local preferredBodygroups = {}
 
 
 --[[---------------------------------------------------------------------------
@@ -38,7 +48,28 @@ end
 function DarkRP.getPreferredJobModel(teamNr)
     local job = RPExtraTeams[teamNr]
     if not job then return end
-    return preferredModels[job.command]
+    return preferredBodygroups[job.command]
+end
+
+function DarkRP.setPreferredJobBodyGroups(teamNr, groups)
+    print(teamNr)
+    PrintTable(groups)
+    local job = RPExtraTeams[teamNr]
+    if not job then return end
+    preferredBodygroups[job.command] = groups
+    PrintTable(preferredBodygroups)
+    sql.Query(string.format([[REPLACE INTO darkrp_playerbodygroups(server, jobcmd, model, bodygroups) VALUES(%s, %s, %s, %s);]], sql.SQLStr(game.GetIPAddress()), sql.SQLStr(job.command), sql.SQLStr(job.model), sql.SQLStr(util.TableToJSON(groups))))
+
+    net.Start("DarkRP_preferredBodyGroups")
+        net.WriteUInt(teamNr, 8)
+        net.WriteTable(groups)
+    net.SendToServer()
+end
+
+function DarkRP.getPreferredBodyGroups(teamNr)
+    local job = RPExtraTeams[teamNr]
+    if not job then return end
+    return preferredBodygroups[job.command]
 end
 
 --[[---------------------------------------------------------------------------
@@ -68,6 +99,15 @@ local function setPreferredModels(models)
     end
 end
 
+local function setPreferredBodygroups(bodygroups)
+    for _, v in pairs(bodygroups) do
+        local job = DarkRP.getJobByCommand(v.jobcmd)
+        if job == nil then continue end
+
+        preferredBodygroups[v.jobcmd] = util.JSONToTable(v.bodygroups)
+    end
+end
+
 -- The old table, darkp_playermodels, acts as a global mapping of preferred
 -- models for jobs.
 local function setModelsFromOldTable()
@@ -88,6 +128,13 @@ local function setModelsFromNewTable()
     setPreferredModels(models)
 end
 
+local function setBodygGroupsFromTable()
+    local bodygroups = sql.Query(string.format([[SELECT jobcmd, bodygroups FROM darkrp_playerbodygroups WHERE server = %s;]], sql.SQLStr(game.GetIPAddress())))
+
+    if not bodygroups then return end
+    setPreferredBodygroups(bodygroups)
+end
+
 timer.Simple(0, function()
     -- Run after the jobs have loaded, to make sure the jobs can be looked up.
 
@@ -95,6 +142,7 @@ timer.Simple(0, function()
     -- new table. That way, server specific preferences always have precedence.
     setModelsFromOldTable()
     setModelsFromNewTable()
+    setBodygGroupsFromTable()
 
     sendModels()
 end)

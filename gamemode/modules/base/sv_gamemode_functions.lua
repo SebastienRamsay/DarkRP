@@ -644,11 +644,23 @@ function GM:PlayerSetModel(ply)
             EndModel = jobTable.model
         end
 
+        local bodyGroups = ply:getPreferredBodyGroups(ply:Team()) or {}
         ply:SetModel(EndModel)
+
+        for bodyGroupID, subModelId in pairs(bodyGroups) do
+            print("bodyGroupID", bodyGroupID, "subModelId", subModelId)
+            ply:SetBodygroup(bodyGroupID, subModelId)
+        end
     else
         local cl_playermodel = ply:GetInfo("cl_playermodel")
         local modelname = player_manager.TranslatePlayerModel(cl_playermodel)
-        ply:SetModel(ply:getPreferredModel(ply:Team()) or modelname)
+        local model = ply:getPreferredModel(ply:Team()) or modelname
+        local bodyGroups = ply:getPreferredBodyGroups(ply:Team()) or {}
+        ply:SetModel(model)
+        for bodyGroupID, subModelId in pairs(bodyGroups) do
+            print("bodyGroupID", bodyGroupID, "subModelId", subModelId)
+            ply:SetBodygroup(bodyGroupID, subModelId)
+        end
     end
 
     self.Sandbox.PlayerSetModel(self, ply)
