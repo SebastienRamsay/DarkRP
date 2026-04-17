@@ -139,7 +139,7 @@ local function DropMoney(ply, args)
         return ""
     end
 
-    if not ply:canAfford(amount) then
+    if not ply:canAfford(amount, true) then
         DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("cant_afford", ""))
 
         return ""
