@@ -66,7 +66,7 @@ local function BuyFood(ply, args)
             DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("cant_afford", DarkRP.getPhrase("food")))
             return ""
         end
-        ply:addMoney(-cost)
+        ply:addMoney(-cost, "BuyFood")
         DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("you_bought", v.name, DarkRP.formatMoney(cost), ""))
 
         local trace = {}

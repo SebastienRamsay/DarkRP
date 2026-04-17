@@ -159,7 +159,7 @@ function SWEP:DoAttack(dmg)
             if ent.SeizeReward and not ent.beenSeized and not ent.burningup and Owner:isCP() and ent.Getowning_ent and Owner ~= ent:Getowning_ent() then
                 local amount = isfunction(ent.SeizeReward) and ent:SeizeReward(Owner, dmg) or ent.SeizeReward
 
-                Owner:addMoney(amount)
+                Owner:addMoney(amount, "SeizeReward", ent:Getowning_ent())
                 DarkRP.notify(Owner, 1, 4, DarkRP.getPhrase("you_received_x", DarkRP.formatMoney(amount), DarkRP.getPhrase("bonus_destroying_entity")))
                 ent.beenSeized = true
             end

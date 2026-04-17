@@ -182,7 +182,7 @@ function pmeta:doPropertyTax()
     local canAfford = self:canAfford(tax)
 
     if canAfford then
-        self:addMoney(-tax)
+        self:addMoney(-tax, "property_tax")
         DarkRP.notify(self, 0, 5, DarkRP.getPhrase("property_tax", DarkRP.formatMoney(tax)))
     else
         taxesUnOwnAll(self, taxables)
@@ -225,7 +225,7 @@ function pmeta:initiateTax()
         taxAmount = amount or taxAmount
         taxAmount = math.Max(0, taxAmount)
 
-        self:addMoney(-taxAmount)
+        self:addMoney(-taxAmount, "wallettax")
         DarkRP.notify(self, 3, 7, DarkRP.getPhrase("taxday", math.Round(taxAmount / money * 100, 3)))
 
         hook.Call("onPaidTax", DarkRP.hooks, self, tax, money)
@@ -372,7 +372,7 @@ local function OwnDoor(ply)
         ent:setKeysTitle(nil)
         local GiveMoneyBack = math.floor((hook.Call("get" .. (ent:IsVehicle() and "Vehicle" or "Door") .. "Cost", GAMEMODE, ply, ent) * 0.666) + 0.5)
         hook.Call("playerKeysSold", GAMEMODE, ply, ent, GiveMoneyBack)
-        ply:addMoney(GiveMoneyBack)
+        ply:addMoney(GiveMoneyBack, "SellDoor")
         local bSuppress = hook.Call("hideSellDoorMessage", GAMEMODE, ply, ent)
         if not bSuppress then
             DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("door_sold", DarkRP.formatMoney(GiveMoneyBack)))
@@ -411,7 +411,7 @@ local function OwnDoor(ply)
             return ""
         end
 
-        ply:addMoney(-iCost)
+        ply:addMoney(-iCost, bVehicle and "BuyVehicle" or "BuyDoor")
         if not bSuppress then
             DarkRP.notify(ply, 0, 4, bVehicle and DarkRP.getPhrase("vehicle_bought", DarkRP.formatMoney(iCost), "") or DarkRP.getPhrase("door_bought", DarkRP.formatMoney(iCost), ""))
         end
@@ -463,7 +463,7 @@ local function UnOwnAll(ply, cmd, args)
 
     if amount == 0 then DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("no_doors_owned")) return "" end
 
-    ply:addMoney(math.floor(cost))
+    ply:addMoney(math.floor(cost), "SellDoor")
 
     DarkRP.notify(ply, 2, 4, DarkRP.getPhrase("sold_x_doors", amount, DarkRP.formatMoney(math.floor(cost))))
     return ""

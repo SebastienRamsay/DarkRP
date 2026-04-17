@@ -59,7 +59,7 @@ local function EnterLottery(answer, ent, initiator, target, TimeIsUp)
             return
         end
         table.insert(LotteryPeople, target)
-        target:addMoney(-LotteryAmount)
+        target:addMoney(-LotteryAmount, "Lottery Entry")
         DarkRP.notify(target, 0,4, DarkRP.getPhrase("lottery_entered", DarkRP.formatMoney(LotteryAmount)))
         hook.Run("playerEnteredLottery", target)
     elseif IsValid(target) and answer ~= nil and not hasEntered then
@@ -82,7 +82,7 @@ local function EnterLottery(answer, ent, initiator, target, TimeIsUp)
         local chosen = LotteryPeople[math.random(1, #LotteryPeople)]
         local amt = #LotteryPeople * LotteryAmount
         hook.Run("lotteryEnded", LotteryPeople, chosen, amt)
-        chosen:addMoney(amt)
+        chosen:addMoney(amt, "Lottery Win")
         DarkRP.notifyAll(0, 10, DarkRP.getPhrase("lottery_won", chosen:Nick(), DarkRP.formatMoney(amt)))
     end
 end

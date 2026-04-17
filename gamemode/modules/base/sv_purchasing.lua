@@ -92,7 +92,7 @@ local function BuyPistol(ply, args)
     hook.Call("playerBoughtPistol", nil, ply, shipment, weapon, cost)
 
     if IsValid(weapon) then
-        ply:addMoney(-cost)
+        ply:addMoney(-cost, "BuyPistol")
         DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("you_bought", args, DarkRP.formatMoney(cost)))
     else
         DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("unable", "/buy", args))
@@ -203,7 +203,7 @@ local function BuyShipment(ply, args)
     hook.Call("playerBoughtShipment", nil, ply, CustomShipments[foundKey], crate, cost)
 
     if IsValid(crate) then
-        ply:addMoney(-cost)
+        ply:addMoney(-cost, "BuyShipment")
         DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("you_bought", args, DarkRP.formatMoney(cost)))
     else
         DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("unable", "/buyshipment", arg))
@@ -291,7 +291,7 @@ local function BuyVehicle(ply, args)
 
     local cost = price or found.getPrice and found.getPrice(ply, found.price) or found.price
 
-    ply:addMoney(-cost)
+    ply:addMoney(-cost, "BuyVehicle")
     DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("you_bought", found.label or found.name, DarkRP.formatMoney(cost)))
 
     local trace = {}
@@ -407,7 +407,7 @@ local function BuyAmmo(ply, args)
     local cost = price or found.getPrice and found.getPrice(ply, found.price) or found.price
 
     DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("you_bought", found.name, DarkRP.formatMoney(cost)))
-    ply:addMoney(-cost)
+    ply:addMoney(-cost, "BuyAmmo")
 
     local trace = {}
     trace.start = ply:EyePos()

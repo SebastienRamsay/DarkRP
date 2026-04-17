@@ -141,7 +141,7 @@ function GM:PlayerSpawnedProp(ply, model, ent)
     if GAMEMODE.Config.proppaying then
         if ply:canAfford(GAMEMODE.Config.propcost) then
             DarkRP.notify(ply, 0, 4, DarkRP.getPhrase("deducted_money", DarkRP.formatMoney(GAMEMODE.Config.propcost)))
-            ply:addMoney(-GAMEMODE.Config.propcost)
+            ply:addMoney(-GAMEMODE.Config.propcost, "propcost")
         else
             DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("need_money", DarkRP.formatMoney(GAMEMODE.Config.propcost)))
             SafeRemoveEntity(ent)
@@ -285,7 +285,7 @@ function GM:OnNPCKilled(victim, ent, weapon)
     -- If we know by now who killed the NPC, pay them.
     if IsValid(ent) and hook.Call("canEarnNPCKillPay", GAMEMODE, ent, victim) then
         local amount = hook.Call("calculateNPCKillPay", GAMEMODE, ent, victim)
-        ent:addMoney(amount)
+        ent:addMoney(amount, "NPC Kill")
         DarkRP.notify(ent, 0, 4, DarkRP.getPhrase("npc_killpay", DarkRP.formatMoney(amount)))
     end
 end
@@ -556,7 +556,7 @@ function GM:PlayerDeath(ply, weapon, killer)
         end
 
         if amount > 0 then
-            ply:addMoney(-amount)
+            ply:addMoney(-amount, "dropmoneyondeath", killer)
             DarkRP.createMoneyBag(ply:GetPos(), amount)
         end
     end

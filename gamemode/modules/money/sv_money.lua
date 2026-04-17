@@ -15,8 +15,8 @@ function meta:addMoney(amount)
 end
 
 function DarkRP.payPlayer(ply1, ply2, amount)
-    ply1:addMoney(-amount)
-    ply2:addMoney(amount)
+    ply1:addMoney(-amount, "PayPlayer", ply2)
+    ply2:addMoney(amount, "PayPlayer", ply1)
 end
 
 function meta:payDay()
@@ -29,7 +29,7 @@ function meta:payDay()
             if amount == 0 or not amount then
                 if not suppress then DarkRP.notify(self, 4, 4, message or DarkRP.getPhrase("payday_unemployed")) end
             else
-                self:addMoney(amount)
+                self:addMoney(amount, "PayDay")
                 if not suppress then DarkRP.notify(self, 4, 4, message or DarkRP.getPhrase("payday_message", DarkRP.formatMoney(amount))) end
             end
         end)
@@ -158,7 +158,7 @@ local function DropMoney(ply, args)
 
     ply:addCustomEntity(moneyTable)
 
-    ply:addMoney(-amount)
+    ply:addMoney(-amount, "Dropping cash (/dropmoney)")
     ply:DoAnimationEvent(ACT_GMOD_GESTURE_ITEM_DROP)
 
     timer.Simple(1, function()
@@ -220,7 +220,7 @@ local function CreateCheque(ply, args)
     ply:addCustomEntity(chequeTable)
 
     if IsValid(ply) and IsValid(recipient) then
-        ply:addMoney(-amount)
+        ply:addMoney(-amount, "Dropping cheque (/cheque)", recipient)
     end
 
     ply:DoAnimationEvent(ACT_GMOD_GESTURE_ITEM_DROP)
@@ -306,7 +306,7 @@ local function ccAddMoney(ply, args)
     end
 
     if target then
-        target:addMoney(amount)
+        target:addMoney(amount, "AdminAddMoney")
 
         DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("you_gave", target:Nick(), DarkRP.formatMoney(amount)))
 

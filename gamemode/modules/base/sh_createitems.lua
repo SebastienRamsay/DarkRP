@@ -354,7 +354,7 @@ local function addEntityCommands(tblEnt)
             return ""
         end
 
-        ply:addMoney(-cost)
+        ply:addMoney(-cost, "BuyCustomEntity")
 
         local trace = {}
         trace.start = ply:EyePos()

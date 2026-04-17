@@ -34,7 +34,7 @@ function ENT:Use(activator, caller)
 
     hook.Call("playerPickedUpMoney", nil, activator, amount or 0, self)
 
-    activator:addMoney(amount or 0)
+    activator:addMoney(amount or 0, "Picked up cash", self:Getowning_ent())
     DarkRP.notify(activator, 0, 4, DarkRP.getPhrase("found_money", DarkRP.formatMoney(self:Getamount())))
     self:Remove()
 end
