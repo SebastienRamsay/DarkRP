@@ -57,7 +57,6 @@ function DarkRP.setPreferredJobBodyGroups(teamNr, groups)
     local job = RPExtraTeams[teamNr]
     if not job then return end
     preferredBodygroups[job.command] = groups
-    PrintTable(preferredBodygroups)
     sql.Query(string.format([[REPLACE INTO darkrp_playermodel_extras(server, jobcmd, model, bodygroups, skin) VALUES(%s, %s, %s, %s);]], sql.SQLStr(game.GetIPAddress()), sql.SQLStr(job.command), sql.SQLStr(job.model), sql.SQLStr(util.TableToJSON(groups)), sql.SQLStr(preferredSkins[job.command])))
 
     net.Start("DarkRP_preferredBodyGroups")
@@ -76,7 +75,6 @@ function DarkRP.setPreferredJobSkin(teamNr, skin)
     local job = RPExtraTeams[teamNr]
     if not job then return end
     preferredSkins[job.command] = skin
-    PrintTable(preferredSkins)
     sql.Query(string.format([[REPLACE INTO darkrp_playermodel_extras(server, jobcmd, model, bodygroups, skin) VALUES(%s, %s, %s, %s);]], sql.SQLStr(game.GetIPAddress()), sql.SQLStr(job.command), sql.SQLStr(job.model), sql.SQLStr(util.TableToJSON(preferredBodygroups[job.command] or {})), sql.SQLStr(skin)))
 
     net.Start("DarkRP_preferredSkin")
@@ -108,10 +106,10 @@ end
 local function sendBodygroups()
     net.Start("DarkRP_all_preferredBodyGroups")
         for _, job in pairs(RPExtraTeams) do
-            if not preferredModels[job.command] then net.WriteBit(false) continue end
+            if not preferredBodygroups[job.command] then net.WriteBit(false) continue end
 
             net.WriteBit(true)
-            net.WriteTable(preferredModels[job.command])
+            net.WriteTable(preferredBodygroups[job.command] or {})
         end
     net.SendToServer()
 end
@@ -122,7 +120,7 @@ local function sendSkins()
             if not preferredModels[job.command] then net.WriteBit(false) continue end
 
             net.WriteBit(true)
-            net.WriteUInt(preferredSkins[job.command], 10)
+            net.WriteUInt(preferredSkins[job.command] or 1, 10)
         end
     net.SendToServer()
 end
