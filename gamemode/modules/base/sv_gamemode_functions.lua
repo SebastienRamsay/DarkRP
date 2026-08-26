@@ -1019,8 +1019,8 @@ function GM:PlayerDisconnected(ply)
 
     local isMayor = ply:isMayor()
 
-    local remList = collectRemoveEntities(ply)
-    removeDelayed(remList, ply)
+    -- local remList = collectRemoveEntities(ply)
+    -- removeDelayed(remList, ply)
 
     DarkRP.destroyQuestionsWithEnt(ply)
     DarkRP.destroyVotesWithEnt(ply)
