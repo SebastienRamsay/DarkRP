@@ -34,7 +34,10 @@ end
 local function addLaw(ply, args)
     local canEdit, message = hook.Call("canEditLaws", hookCanEditLaws, ply, "addLaw", args)
 
-    if not canEdit then
+    if canEdit then
+        badLaw, message = hook.Run("IsBadLaw", ply, args)
+    end
+    if not canEdit or badLaw then
         DarkRP.notify(ply, 1, 4, message ~= nil and message or DarkRP.getPhrase("unable", GAMEMODE.Config.chatCommandPrefix .. "addLaw", ""))
         return ""
     end
